@@ -1,14 +1,12 @@
-module TSort
+module TSort(T)
   class Cyclic < ::Exception
   end
-  class NotImplementedError < ::Exception
-  end
 
-  def tsort
+  def tsort : Array(T)
     tsort_each
   end
 
-  def tsort_each(&block : Int32 -> _) : Nil
+  def tsort_each(&block : T -> _) : Nil
     each_strongly_connected_component do |component|
       if component.size == 1
         block.call(component.first)
@@ -18,8 +16,10 @@ module TSort
     end
   end
 
-  def tsort_each
-    components = [] of Int32 | Array(Int32)
+  # FIXME: This probably should return an `Iterable`, which `#tsort` turns into
+  # an array.
+  def tsort_each : Array(T)
+    components = [] of T
     tsort_each { |component| components << component }
     components
   end
@@ -28,17 +28,12 @@ module TSort
     each_strongly_connected_component
   end
 
-  def tsort_each_node
-    raise NotImplementedError
-  end
+  abstract def tsort_each_node(&b : T -> _)
+  abstract def tsort_each_child(node : T, &b : T -> _)
 
-  def tsort_each_child
-    raise NotImplementedError
-  end
-
-  def each_strongly_connected_component(&block : Array(Int32) -> _) : Nil
-    id_map = {} of Int32 => Int32 | Nil
-    stack  = [] of Int32
+  def each_strongly_connected_component(&block : Array(T) -> _) : Nil
+    id_map = {} of T => UInt32?
+    stack  = [] of T
 
     tsort_each_node do |node|
       unless id_map.has_key?(node)
@@ -49,14 +44,14 @@ module TSort
     end
   end
 
-  private def each_strongly_connected_component : Array(Array(Int32))
-    components = [] of Array(Int32)
+  private def each_strongly_connected_component : Array(Array(T))
+    components = [] of Array(T)
     each_strongly_connected_component { |component| components << component }
     components
   end
 
-  private def each_strongly_connected_component_from(node, id_map, stack, &block : Array(Int32) -> _) : Int32
-    minimum_id = node_id = id_map[node] = id_map.size
+  private def each_strongly_connected_component_from(node, id_map, stack, &block : Array(T) -> _) : UInt32
+    minimum_id = node_id = id_map[node] = id_map.size.to_u32
     stack_length = stack.size
     stack << node
 
