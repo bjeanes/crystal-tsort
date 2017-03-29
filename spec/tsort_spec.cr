@@ -34,4 +34,12 @@ describe TSort do
       expect_raises(TSort::Cyclic) { g.tsort }
     end
   end
+
+  describe "#strongly_connected_components" do
+    it "should return strongly connected components" do
+      g = {1=>[2], 2=>[3, 4], 3=>[2], 4=>[] of Int32}
+      actual = g.strongly_connected_components
+      actual.should eq([[4], [2, 3], [1]])
+    end
+  end
 end
